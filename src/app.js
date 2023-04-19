@@ -4,6 +4,7 @@ import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
+import joi from "joi";
 
 // Criação do servidor
 const app = express();
@@ -21,15 +22,36 @@ mongoClient
   .then(() => (db = mongoClient.db()))
   .catch((err) => console.log(err.message));
 
+//Validações
+const userSchema = joi.object({
+  name: joi.string().required(),
+  email: joi.string().email().required(),
+  password: joi.string().min(3).required(),
+});
+
+const loginSchema = joi.object({
+    email: joi.string().email().required(),
+    password: joi.string().min(3).required(),
+  });
+
 // Endpoints //
 
 //Cadastro
 app.post("/sign-up", async (req, res) => {
   const { name, email, password } = req.body;
 
+  const validation = userSchema.validate(req.body, { abortEarly: false });
+
+  if (validation.error) {
+    const errors = validation.error.details.map((detail) => detail.message);
+    return res.status(422).send(errors);
+  }
+
   const passwordHash = bcrypt.hashSync(password, 10);
 
   try {
+    const unavailableEmail = await db.collection("users").findOne({email});
+    if (unavailableEmail) return res.status(409).send("Este email já está cadastrado!");
     await db
       .collection("users")
       .insertOne({ name, email, password: passwordHash });
@@ -42,6 +64,13 @@ app.post("/sign-up", async (req, res) => {
 //Login
 app.post("/sign-in", async (req, res) => {
   const { email, password } = req.body;
+
+  const validation = loginSchema.validate(req.body, { abortEarly: false });
+
+  if (validation.error) {
+    const errors = validation.error.details.map((detail) => detail.message);
+    return res.status(422).send(errors);
+  }
 
   try {
     const user = await db.collection("users").findOne({ email });
@@ -64,11 +93,11 @@ app.post("/nova-transacao/:tipo", async (req, res) => {
   const { value, description } = req.body;
   const { tipo: type } = req.params;
   const { authorization } = req.headers;
-  const token = authorization?.replace('Bearer ', '');
+  const token = authorization?.replace("Bearer ", "");
 
-  if(!token) return res.sendStatus(401);
+  if (!token) return res.sendStatus(401);
   const session = await db.collection("sessions").findOne({ token });
-  if(!session ) return res.sendStatus(401);
+  if (!session) return res.sendStatus(401);
 
   //Adicionar transação
   res.send(200);
