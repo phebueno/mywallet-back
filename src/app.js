@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 import joi from "joi";
+import dayjs from "dayjs";
 
 // Criação do servidor
 const app = express();
@@ -30,9 +31,15 @@ const userSchema = joi.object({
 });
 
 const loginSchema = joi.object({
-    email: joi.string().email().required(),
-    password: joi.string().min(3).required(),
-  });
+  email: joi.string().email().required(),
+  password: joi.string().min(3).required(),
+});
+
+const opSchema = joi.object({
+  value: joi.number().precision(2).sign("positive").required(),
+  description: joi.string().required(),
+  type: joi.valid("entrada", "saida").required(),
+});
 
 // Endpoints //
 
@@ -50,8 +57,9 @@ app.post("/sign-up", async (req, res) => {
   const passwordHash = bcrypt.hashSync(password, 10);
 
   try {
-    const unavailableEmail = await db.collection("users").findOne({email});
-    if (unavailableEmail) return res.status(409).send("Este email já está cadastrado!");
+    const unavailableEmail = await db.collection("users").findOne({ email });
+    if (unavailableEmail)
+      return res.status(409).send("Este email já está cadastrado!");
     await db
       .collection("users")
       .insertOne({ name, email, password: passwordHash });
@@ -88,7 +96,7 @@ app.post("/sign-in", async (req, res) => {
   }
 });
 
-//Adiciona operação
+//Adiciona transação
 app.post("/nova-transacao/:tipo", async (req, res) => {
   const { value, description } = req.body;
   const { tipo: type } = req.params;
@@ -98,9 +106,28 @@ app.post("/nova-transacao/:tipo", async (req, res) => {
   if (!token) return res.sendStatus(401);
   const session = await db.collection("sessions").findOne({ token });
   if (!session) return res.sendStatus(401);
+  const user = await db.collection("users").findOne({
+    _id: session.userId,
+  });
 
-  //Adicionar transação
-  res.send(200);
+  const validation = opSchema.validate(
+    { ...req.body, type },
+    { abortEarly: false }
+  );
+
+  if (validation.error) {
+    const errors = validation.error.details.map((detail) => detail.message);
+    return res.status(422).send(errors);
+  }
+
+  //Adicionar operação
+  try {
+    delete user.password; //é necessário?
+    await db.collection("operations").insertOne({userId:user._id, ...req.body, type, opTimeStamp: Date.now()});
+    res.sendStatus(201);
+  } catch (error) {
+    console.log(error.message);
+  }  
 });
 
 // Deixa o app escutando, à espera de requisições
