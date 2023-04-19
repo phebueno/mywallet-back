@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
@@ -107,7 +107,7 @@ app.post("/nova-transacao/:tipo", async (req, res) => {
   const session = await db.collection("sessions").findOne({ token });
   if (!session) return res.sendStatus(401);
   const user = await db.collection("users").findOne({
-    _id: session.userId,
+    _id: new ObjectId(session.userId)
   });
 
   const validation = opSchema.validate(
@@ -123,11 +123,36 @@ app.post("/nova-transacao/:tipo", async (req, res) => {
   //Adicionar operação
   try {
     delete user.password; //é necessário?
-    await db.collection("operations").insertOne({userId:user._id, ...req.body, type, opTimeStamp: Date.now()});
+    await db
+      .collection("operations")
+      .insertOne({
+        userId: user._id,
+        ...req.body,
+        type,
+        opTimeStamp: Date.now(),
+      });
     res.sendStatus(201);
   } catch (error) {
     console.log(error.message);
-  }  
+  }
+});
+
+//Retorna transações
+app.get("/transacoes", async (req, res) => {
+  const { authorization } = req.headers;
+  const token = authorization?.replace("Bearer ", "");
+
+  if (!token) return res.sendStatus(401);
+  const session = await db.collection("sessions").findOne({ token });
+  if (!session) return res.sendStatus(401);
+  const user = await db.collection("users").findOne({
+    _id: new ObjectId(session.userId),
+  });
+  //Recuperar lista de transações
+  const opsUser = await db.collection("operations").find({
+    userId: new ObjectId(session.userId),
+  }).toArray();
+  res.send(opsUser);
 });
 
 // Deixa o app escutando, à espera de requisições
