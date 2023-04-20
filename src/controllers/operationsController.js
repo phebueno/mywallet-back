@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import joi from "joi";
 import { ObjectId } from "mongodb";
 import { db } from "../app.js";
@@ -41,7 +42,7 @@ export async function postOp(req, res) {
           userId: user._id,
           ...req.body,
           type,
-          opTimeStamp: Date.now(),
+          opDate: dayjs().format('DD/MM'),
         });
       res.sendStatus(201);
     } catch (error) {
@@ -59,9 +60,10 @@ export async function postOp(req, res) {
     const user = await db.collection("users").findOne({
       _id: new ObjectId(session.userId),
     });
+    if (!user) return res.sendStatus(401);
     //Recuperar lista de transações
     const opsUser = await db.collection("operations").find({
       userId: new ObjectId(session.userId),
     }).toArray();
-    res.send(opsUser);
+    res.send({user:user.name, opsUser});
   }
