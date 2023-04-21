@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import { MongoClient} from "mongodb";
 import dotenv from "dotenv";
-import dayjs from "dayjs";
-import { signin, signup } from "./controllers/authController.js";
-import { getOp, postOp } from "./controllers/operationsController.js";
+import { signin, signup } from "./controllers/auth.controller.js";
+import { getOp, postOp } from "./controllers/operations.controller.js";
+import routes from "./routes/index.routes.js";
 
 // Criação do servidor
 const app = express();
@@ -23,13 +23,11 @@ mongoClient
   .catch((err) => console.log(err.message));
 
 // Endpoints //
-app.post("/sign-up", signup);
 
-app.post("/sign-in", signin);
+app.use(routes);
 
-app.post("/nova-transacao/:tipo", postOp);
 
-app.get("/transacoes", getOp);
+
 
 // Deixa o app escutando, à espera de requisições
 const PORT = 5000;
