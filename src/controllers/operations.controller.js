@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
-import joi from "joi";
 import { ObjectId } from "mongodb";
-import { db } from "../app.js";
+import { db } from "../database/database.connection.js";
 
 export async function postOp(req, res) {
   const { tipo: type } = req.params;
