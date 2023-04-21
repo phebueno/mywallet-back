@@ -3,16 +3,8 @@ import { ObjectId } from "mongodb";
 import { db } from "../database/database.connection.js";
 
 export async function postOp(req, res) {
-  const { tipo: type } = req.params;
-  const { authorization } = req.headers;
-  const token = authorization?.replace("Bearer ", "");
-
-  if (!token) return res.sendStatus(401);
-  const session = await db.collection("sessions").findOne({ token });
-  if (!session) return res.sendStatus(401);
-  const user = await db.collection("users").findOne({
-    _id: new ObjectId(session.userId),
-  });
+  const { tipo: type } = req.params;  
+  const user = res.locals.user;
 
   //Adicionar operação
   try {
@@ -30,16 +22,7 @@ export async function postOp(req, res) {
 }
 
 export async function getOp(req, res) {
-  const { authorization } = req.headers;
-  const token = authorization?.replace("Bearer ", "");
-
-  if (!token) return res.sendStatus(401);
-  const session = await db.collection("sessions").findOne({ token });
-  if (!session) return res.sendStatus(401);
-  const user = await db.collection("users").findOne({
-    _id: new ObjectId(session.userId),
-  });
-  if (!user) return res.sendStatus(401);
+  const {user, session} = res.locals;
   //Recuperar lista de transações
   const opsUser = await db
     .collection("operations")
@@ -48,4 +31,9 @@ export async function getOp(req, res) {
     })
     .toArray();
   res.send({ user: user.name, opsUser });
+}
+
+export async function deleteOp(req, res){
+  const {id} = req.params;
+  res.send(id);
 }
