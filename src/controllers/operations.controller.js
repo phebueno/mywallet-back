@@ -34,6 +34,23 @@ export async function getOp(req, res) {
 }
 
 export async function deleteOp(req, res){
+  const {user, session} = res.locals;
   const {id} = req.params;
-  res.send(id);
+  try {
+    const opToBeDeleted = await db.collection("operations").findOne({
+      userId: new ObjectId(session.userId),
+      _id: new ObjectId(id)
+    })
+    if (!opToBeDeleted) return res.sendStatus(404);
+    const opDeleted = await db.collection("operations").deleteOne({
+      _id: new ObjectId(id)
+    })
+    if (opDeleted.deletedCount !== 0){
+      res.status(202).send(opDeleted);
+    }
+    else res.sendStatus(204);
+    
+  } catch (error) {
+    console.log(error);
+  }  
 }

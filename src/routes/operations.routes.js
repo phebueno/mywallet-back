@@ -15,6 +15,6 @@ opRouter.post(
   postOp
 );
 opRouter.get("/transacoes", validateAuth, getOp);
-opRouter.delete("/transacao/:id", deleteOp);
+opRouter.delete("/transacao/:id", validateAuth, deleteOp);
 
 export default opRouter;
