@@ -7,14 +7,17 @@ import {
 import { validateSchema } from "../middlewares/validateSchema.middleware.js";
 import { validateIdSchema } from "../middlewares/validateIdSchema.middleware.js";
 import { validateAuth } from "../middlewares/validateAuth.middleware.js";
+import {dataSanitize} from "../middlewares/sanitizeData.middleware.js";
 import opSchema from "../schemas/op.schema.js";
 import typeSchema from "../schemas/opType.schema.js";
 import idSchema from "../schemas/opID.schema.js";
+
 
 const opRouter = Router();
 opRouter.use(validateAuth);
 opRouter.post(
   "/nova-transacao/:tipo",
+  dataSanitize,
   validateSchema(opSchema),
   validateIdSchema(typeSchema),
   postOp
