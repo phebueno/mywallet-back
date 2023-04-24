@@ -1,7 +1,6 @@
 export function validateIdSchema(schema) {
-    return (req, res, next) => {
-        const { tipo: type } = req.params;
-        const validation = schema.validate({type}, { abortEarly: false });
+    return (req, res, next) => {        
+        const validation = schema.validate(req.params, { abortEarly: false });
 
         if (validation.error) {
           const errors = validation.error.details.map((detail) => detail.message);

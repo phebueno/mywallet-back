@@ -30,11 +30,11 @@ export async function getOp(req, res) {
       userId: new ObjectId(session.userId),
     })
     .toArray();
-  res.send({ user: user.name, opsUser });
+  res.send({ user: user.name, opsUser:opsUser.reverse() });
 }
 
 export async function deleteOp(req, res){
-  const {user, session} = res.locals;
+  const {session} = res.locals;
   const {id} = req.params;
   try {
     const opToBeDeleted = await db.collection("operations").findOne({
