@@ -5,7 +5,7 @@ import {
   deleteOp,
   editOp,
 } from "../controllers/operations.controller.js";
-import { validateSchema } from "../middlewares/validateSchema.middleware.js";
+import { validateSchema } from "../middlewares/validateBodySchema.middleware.js";
 import { validateIdSchema } from "../middlewares/validateIdSchema.middleware.js";
 import { validateAuth } from "../middlewares/validateAuth.middleware.js";
 import { dataSanitize } from "../middlewares/sanitizeData.middleware.js";
