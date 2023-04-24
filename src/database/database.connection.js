@@ -8,5 +8,5 @@ export let db;
 const mongoClient = new MongoClient(process.env.DATABASE_URL);
 mongoClient
   .connect()
-  .then(() => (db = mongoClient.db()))
+  .then(() => (db = mongoClient.db("myWallet")))
   .catch((err) => console.log(err.message));
